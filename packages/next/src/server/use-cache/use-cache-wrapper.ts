@@ -3383,6 +3383,21 @@ export async function cache(
               }
             }
 
+            // A stale join is a miss for prerenders, just like a direct read.
+            if (
+              willConsumerServerCache(workUnitStore) &&
+              performance.timeOrigin + performance.now() >
+                metadata.timestamp + metadata.revalidate * 1000
+            ) {
+              debug?.(
+                logPrefix,
+                'discarding joined invocation because its entry is stale',
+                cacheHandlerKey
+              )
+              cacheSignal?.endRead()
+              continue
+            }
+
             // Key matches — safe to fork.
             debug?.(
               logPrefix,
